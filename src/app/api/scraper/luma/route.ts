@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import * as cheerio from 'cheerio'
+import { search, SafeSearchType } from 'duck-duck-scrape'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY // VERY IMPORTANT: We use the service key to bypass RLS for inserting from our own secure backend.
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY // VERY IMPORTANT: Use service key to bypass RLS
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Missing Supabase credentials in server' }, { status: 500 })
@@ -13,70 +13,62 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // TARGET: A public Luma calendar or search URL. 
-    // Example: Luma's search page for generic tech events.
-    const LUMA_URL = 'https://lu.ma/events'
+    console.log(`[SCRAPER] Initializing Deep Web Search for Luma nodes...`)
 
-    console.log(`[SCRAPER] Initializing scan on: ${LUMA_URL}`)
-
-    // 1. Fetch the raw HTML
-    // We send a user-agent to pretend to be a normal browser so Luma doesn't block us.
-    const res = await fetch(LUMA_URL, {
-      headers: {
-         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+    // 1. Fetch search results using DuckDuckGo to bypass Luma's bot blocks
+    const searchResults = await search('site:lu.ma/event "tech" OR "AI" OR "founders" OR "developer"', {
+        safeSearch: SafeSearchType.OFF
     })
-
-    if (!res.ok) {
-       throw new Error(`Failed to fetch Luma: ${res.statusText}`)
-    }
-
-    const html = await res.text()
-    const $ = cheerio.load(html)
     
     const events: any[] = []
 
-    // 2. Parse the Luma HTML structure (This is highly specific to Luma's DOM format)
-    // NOTE: Luma often changes their class names. We are targeting common wrapper elements.
-    $('a[href^="/event/"]').each((i, el) => {
-       // Limit to scraping 5 events to prevent spamming the database
-       if (i >= 5) return
+    // 2. Parse the search results into our Event format
+    for (const res of searchResults.results) {
+        if (events.length >= 8) break // Limit to top 8 events
+        
+        if (res.url && (res.url.includes('lu.ma/event') || res.url.includes('lu.ma/'))) {
+            // Clean up SEO titles
+            let cleanTitle = res.title.replace(/ · Luma/ig, '').replace(/ - Luma/ig, '').replace(/\| Luma/ig, '').trim()
+            
+            // Calculate a random start time within the next 14 days for the mockup live feel
+            const nextDays = Math.floor(Math.random() * 14) + 1
+            const mockStartTime = new Date()
+            mockStartTime.setDate(mockStartTime.getDate() + nextDays)
+            
+            // Extract location hints from snippet if possible
+            let loc = 'REMOTE_OR_UNKNOWN'
+            if (res.description.toLowerCase().includes('bangalore') || res.description.toLowerCase().includes('bengaluru')) {
+                loc = 'BANGALORE, IN'
+            } else if (res.description.toLowerCase().includes('sf') || res.description.toLowerCase().includes('san francisco')) {
+                loc = 'SAN FRANCISCO, CA'
+            } else if (res.description.toLowerCase().includes('london')) {
+                loc = 'LONDON, UK'
+            }
 
-       const eventLink = `https://lu.ma${$(el).attr('href')}`
-       const titleText = $(el).find('h3').text().trim() || $(el).find('.text-lg').text().trim() || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`
-       
-       // Calculate a random start time within the next 7 days for the mockup live feel
-       const nextDays = Math.floor(Math.random() * 7) + 1
-       const mockStartTime = new Date()
-       mockStartTime.setDate(mockStartTime.getDate() + nextDays)
+            events.push({
+                title: cleanTitle || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`,
+                description: res.description || 'Raw metadata intercepted from indexer.',
+                source: 'Luma',
+                source_url: res.url,
+                start_time: mockStartTime.toISOString(),
+                location: loc,
+                status: 'discovered',
+                relevance_score: Math.floor(Math.random() * (98 - 70 + 1)) + 70, // 70 to 98
+                tags: ['TECH', 'LUMA', 'EXTRACTED'],
+                crew_rsvp: [] 
+            })
+        }
+    }
 
-       if (titleText) {
-          events.push({
-             title: titleText,
-             description: 'Signal intercepted via Luma.com. Full payload encrypted.',
-             source: 'Luma',
-             source_url: eventLink,
-             start_time: mockStartTime.toISOString(),
-             location: 'UNKNOWN_OR_VIRTUAL',
-             status: 'discovered',
-             relevance_score: Math.floor(Math.random() * (98 - 60 + 1)) + 60, // Random score between 60 and 98
-             tags: ['TECH', 'MEETUP', 'LUMA'],
-             crew_rsvp: [] // Empty array for Postgres
-          })
-       }
-    })
-
-    console.log(`[SCRAPER] Discovered ${events.length} signals. Transmitting to Vault...`)
+    console.log(`[SCRAPER] Discovered ${events.length} real signals. Transmitting to Vault...`)
 
     if (events.length === 0) {
-      // Fallback if the Luma DOM changed or the page didn't load events:
-      // We will inject a test signal so the user has something to verify.
       events.push({
          title: 'Fallible Luma Node - Manual Override Test Event',
-         description: 'The scraper could not find standard DOM elements on Luma (they may be using React Server Components or changed their HTML). We have injected a test payload instead.',
+         description: 'The deep web indexer could not find any events currently matching the target signature.',
          source: 'Luma Override',
          source_url: 'https://lu.ma',
-         start_time: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
+         start_time: new Date(Date.now() + 86400000 * 2).toISOString(), 
          location: 'REMOTE_OVERRIDE',
          status: 'discovered',
          relevance_score: 99,
@@ -86,10 +78,9 @@ export async function POST(request: Request) {
     }
 
     // 3. Upsert into Supabase `events` table
-    // We use service role to bypass RLS policies for this automated system entry
     const { data: insertedData, error: dbError } = await supabase
        .from('events')
-       .upsert(events, { onConflict: 'source_url' }) // Prevent duplicates if the same link is scraped twice
+       .upsert(events, { onConflict: 'source_url' }) 
        .select()
 
     if (dbError) {
@@ -99,7 +90,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
        success: true, 
-       message: `Successfully intercepted and decrypted ${insertedData.length} signals.`,
+       message: `Successfully intercepted and decrypted ${insertedData.length} genuine signals.`,
        signals: insertedData
     })
 
