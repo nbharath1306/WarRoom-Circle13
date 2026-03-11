@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { useEventRadar } from '@/hooks/use-event-radar'
 
 export default function EventRadarPage() {
-  const { signals, loading, initiateScan } = useEventRadar()
+  const { signals, loading, initiateScan, scanning, scanResult } = useEventRadar()
 
   if (loading) {
      return (
@@ -41,13 +41,25 @@ export default function EventRadarPage() {
              </Button>
              <Button 
                 onClick={initiateScan}
+                disabled={scanning}
                 className="bg-c13-red text-white h-9 shadow-[0_0_15px_var(--c13-red-glow)]"
              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                INITIATE_SCAN
+                <RefreshCw className={cn("mr-2 h-4 w-4", scanning && "animate-spin")} />
+                {scanning ? 'SCANNING_LUMA...' : 'INITIATE_SCAN'}
              </Button>
           </div>
         </div>
+        
+        {/* SCAN RESULT FEEDBACK */}
+        {scanResult && (
+           <div className={cn(
+              "mt-4 p-3 rounded font-mono text-[10px] flex items-center gap-2",
+              scanResult.error ? "bg-status-error/10 text-status-error border border-status-error/20" : "bg-status-active/10 text-status-active border border-status-active/20"
+           )}>
+              <RadarIcon className="h-4 w-4" />
+              <span className="font-bold uppercase tracking-wider">{scanResult.error || scanResult.message}</span>
+           </div>
+        )}
       </header>
 
       {/* FILTERS */}

@@ -64,12 +64,35 @@ export function useEventRadar() {
     }
   }, [])
 
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<{message?: string, error?: string} | null>(null)
+
   const initiateScan = async () => {
-    // In a real app, this triggers a Supabase Edge Function
-    // For now, we simulate the 'uplink' process
-    console.log('INITIATING_TACTICAL_SCAN...')
-    // Add logic to call Edge Function here if needed
+    setScanning(true)
+    setScanResult(null)
+    console.log('INITIATING_TACTICAL_SCAN_VIA_API...')
+    
+    try {
+      const response = await fetch('/api/scraper/luma', {
+        method: 'POST',
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Unknown error occurred during scan')
+      }
+      
+      setScanResult({ message: result.message })
+      // We don't need to manually update state here because our Supabase real-time subscription
+      // will automatically pick up the new database rows and trigger `fetchSignals()` again!
+    } catch (err: any) {
+      console.error('Scan Failed:', err)
+      setScanResult({ error: err.message })
+    } finally {
+      setScanning(false)
+    }
   }
 
-  return { signals, loading, initiateScan }
+  return { signals, loading, initiateScan, scanning, scanResult }
 }
