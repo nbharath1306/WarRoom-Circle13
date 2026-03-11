@@ -9,13 +9,11 @@ import {
   GraduationCap
 } from 'lucide-react'
 
-const teamPulse = [
-  { name: 'BHARATH', status: 'building', icon: Hammer, color: 'text-status-active' },
-  { name: 'AKHIL', status: 'building', icon: Hammer, color: 'text-status-active' },
-  { name: 'DAVE', status: 'in_class', icon: GraduationCap, color: 'text-status-warning' },
-]
+import { useTeamPulse } from '@/hooks/use-team-pulse'
 
 export function Sidebar() {
+  const { team } = useTeamPulse()
+
   return (
     <aside className="w-60 h-full bg-bg-void border-r border-border-subtle flex flex-col hidden md:flex">
       <div className="flex-1 px-6 py-8 space-y-8 overflow-y-auto">
@@ -79,7 +77,9 @@ export function Sidebar() {
             TEAM // PULSE
           </h3>
           <div className="space-y-4">
-            {teamPulse.map((user) => (
+            {team.length > 0 ? team.map((user) => {
+              const Icon = user.icon
+              return (
               <div key={user.name} className="flex items-center justify-between group">
                  <div className="flex items-center space-x-3">
                     <Circle className={cn("h-2 w-2 fill-current", user.color)} />
@@ -87,9 +87,15 @@ export function Sidebar() {
                        {user.name}
                     </span>
                  </div>
-                 <user.icon className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-secondary transition-colors" />
+                 <Icon className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-secondary transition-colors" />
               </div>
-            ))}
+            )}) : (
+              <div className="flex items-center justify-between group text-text-tertiary">
+                <span className="text-text-tertiary font-mono text-[13px] font-medium tracking-wide">
+                  NO_TEAM_DETECTED
+                </span>
+              </div>
+            )}
           </div>
         </section>
       </div>

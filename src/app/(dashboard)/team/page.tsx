@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,7 +46,11 @@ const mockCheckInFeed = [
 
 export default function TeamPulsePage() {
   const { members } = useTeamStatus()
-  const [statusMessage, setStatusMessage] = useState('')
+  const [statusMessage, setStatusMessage] = React.useState('')
+  // Check-in form state
+  const [checkin, setCheckin] = React.useState({ yesterday: '', today: '', blockers: '' })
+  const [submitting, setSubmitting] = React.useState(false)
+  const [submitResult, setSubmitResult] = React.useState<{ ok: boolean; msg: string } | null>(null)
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -122,32 +126,84 @@ export default function TeamPulsePage() {
 
         {/* Async Check-ins */}
         <div className="lg:col-span-2 space-y-8">
-           <Card className="border-border-default bg-bg-surface overflow-hidden">
+            <Card className="border-border-default bg-bg-surface overflow-hidden">
               <CardHeader className="bg-bg-elevated/30 border-b border-border-subtle p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-[11px] font-mono font-bold text-text-secondary uppercase tracking-[0.2em]">DAILY_SYNC_LOG</CardTitle>
-                    <CardDescription className="text-[10px] font-mono text-text-tertiary uppercase mt-1">BROADCAST_DETAILS_FOR_03.11.26</CardDescription>
+                    <CardDescription className="text-[10px] font-mono text-text-tertiary uppercase mt-1">BROADCAST_DETAILS_FOR_{new Date().toLocaleDateString('en-IN').replaceAll('/', '.')}</CardDescription>
                   </div>
-                  <Button variant="outline" size="xs" className="text-[9px] font-mono tracking-widest border-border-subtle">EDIT_RESPONSE</Button>
                 </div>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">PAST_OPS (YESTERDAY)</label>
-                       <Textarea className="bg-bg-void border-border-subtle h-24 font-mono text-xs focus:ring-c13-red" placeholder="SUMMARIZE ACTIONS..." />
+                       <Textarea
+                         className="bg-bg-void border-border-subtle h-24 font-mono text-xs focus:ring-c13-red"
+                         placeholder="SUMMARIZE ACTIONS..."
+                         value={checkin.yesterday}
+                         onChange={e => setCheckin(c => ({ ...c, yesterday: e.target.value }))}
+                       />
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">ACTIVE_OPS (TODAY)</label>
-                       <Textarea className="bg-bg-void border-border-subtle h-24 font-mono text-xs focus:ring-c13-red" placeholder="OUTLINE TARGETS..." />
+                       <Textarea
+                         className="bg-bg-void border-border-subtle h-24 font-mono text-xs focus:ring-c13-red"
+                         placeholder="OUTLINE TARGETS..."
+                         value={checkin.today}
+                         onChange={e => setCheckin(c => ({ ...c, today: e.target.value }))}
+                       />
                     </div>
                  </div>
                  <div className="space-y-2">
                     <label className="text-[10px] font-mono text-text-tertiary uppercase tracking-widest">THREAT_IDENTIFICATION (BLOCKERS)</label>
-                    <Input className="bg-bg-void border-border-subtle font-mono text-xs focus:ring-c13-red" placeholder="SPECIFY BLOCKERS OR 'NONE'..." />
+                    <Input
+                      className="bg-bg-void border-border-subtle font-mono text-xs focus:ring-c13-red"
+                      placeholder="SPECIFY BLOCKERS OR 'NONE'..."
+                      value={checkin.blockers}
+                      onChange={e => setCheckin(c => ({ ...c, blockers: e.target.value }))}
+                    />
                  </div>
-                 <Button className="w-full bg-status-active text-white h-12 shadow-[0_0_15px_var(--status-active-glow)] font-mono text-xs tracking-[0.2em] uppercase">INITIATE_BROADCAST</Button>
+                 {submitResult && (
+                   <div className={cn(
+                     'p-3 rounded text-[10px] font-mono uppercase tracking-widest border',
+                     submitResult.ok
+                       ? 'bg-status-active/10 text-status-active border-status-active/20'
+                       : 'bg-status-error/10 text-status-error border-status-error/20'
+                   )}>
+                     {submitResult.msg}
+                   </div>
+                 )}
+                 <Button
+                   className="w-full bg-status-active text-white h-12 shadow-[0_0_15px_var(--status-active-glow)] font-mono text-xs tracking-[0.2em] uppercase"
+                   disabled={submitting || !checkin.yesterday || !checkin.today}
+                   onClick={async () => {
+                     setSubmitting(true)
+                     setSubmitResult(null)
+                     try {
+                       const res = await fetch('/api/checkin', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({
+                           yesterday: checkin.yesterday,
+                           today: checkin.today,
+                           blockers: checkin.blockers || 'NONE',
+                         }),
+                       })
+                       const data = await res.json()
+                       if (!res.ok) throw new Error(data.error)
+                       setSubmitResult({ ok: true, msg: 'TRANSMISSION_CONFIRMED // CHECK-IN_LOGGED' })
+                       setCheckin({ yesterday: '', today: '', blockers: '' })
+                     } catch (err: any) {
+                       setSubmitResult({ ok: false, msg: `ERROR: ${err.message}` })
+                     } finally {
+                       setSubmitting(false)
+                     }
+                   }}
+                 >
+                   {submitting ? 'TRANSMITTING...' : 'INITIATE_BROADCAST'}
+                 </Button>
               </CardContent>
            </Card>
 

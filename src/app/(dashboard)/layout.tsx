@@ -1,6 +1,8 @@
 import { Sidebar } from '@/components/layout/sidebar'
 import { TopNav } from '@/components/layout/top-nav'
 import { RightPanel } from '@/components/layout/right-panel'
+import { CommandPalette } from '@/components/layout/command-palette'
+import { CircleBrain } from '@/components/ai/circle-brain'
 
 export default function DashboardLayout({
   children,
@@ -20,6 +22,8 @@ export default function DashboardLayout({
         </main>
         <RightPanel />
       </div>
+      <CommandPalette />
+      <CircleBrain />
     </div>
   )
 }
