@@ -1,72 +1,106 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { 
-  LayoutDashboard, 
-  Calendar, 
-  Radar, 
-  CheckSquare, 
-  BookOpen, 
-  Settings,
-  Users,
-  BarChart3
+  Square,
+  CheckSquare,
+  Circle,
+  Hammer,
+  GraduationCap
 } from 'lucide-react'
 
-const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Event Radar', href: '/radar', icon: Radar },
-  { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-  { name: 'Vault', href: '/vault', icon: BookOpen },
-  { name: 'Team', href: '/team', icon: Users },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+const teamPulse = [
+  { name: 'BHARATH', status: 'building', icon: Hammer, color: 'text-status-active' },
+  { name: 'AKHIL', status: 'building', icon: Hammer, color: 'text-status-active' },
+  { name: 'DAVE', status: 'in_class', icon: GraduationCap, color: 'text-status-warning' },
 ]
 
 export function Sidebar() {
-  const pathname = usePathname()
-
   return (
-    <div className="flex h-screen w-64 flex-col border-r border-[#2A2A4A] bg-[#12122A] text-white">
-      <div className="flex h-16 items-center px-6">
-        <span className="text-xl font-bold text-[#E94560]">WAR ROOM</span>
-      </div>
-      <nav className="flex-1 space-y-1 px-4 py-4">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-[#E94560] text-white'
-                  : 'text-[#A0A0B0] hover:bg-[#1A1A3E] hover:text-[#F5F5F5]'
-              )}
-            >
-              <item.icon
-                className={cn(
-                  'mr-3 h-5 w-5 flex-shrink-0',
-                  isActive ? 'text-white' : 'text-[#A0A0B0] group-hover:text-[#F5F5F5]'
-                )}
-              />
-              {item.name}
-            </Link>
-          )
-        })}
-      </nav>
-      <div className="border-t border-[#2A2A4A] p-4">
-        <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-[#E94560]" />
-          <div className="ml-3">
-            <p className="text-sm font-medium text-[#F5F5F5]">Circle13 Builder</p>
-            <p className="text-xs text-[#A0A0B0]">online</p>
+    <aside className="w-60 h-full bg-bg-void border-r border-border-subtle flex flex-col hidden md:flex">
+      <div className="flex-1 px-6 py-8 space-y-8 overflow-y-auto">
+        
+        {/* TODAY Section */}
+        <section className="space-y-4">
+          <h3 className="text-[10px] font-mono font-bold tracking-[0.15em] text-text-secondary uppercase">
+            TODAY // STATISTICS
+          </h3>
+          <div className="space-y-3">
+             <div className="flex items-center justify-between group">
+                <div className="flex items-center space-x-3 text-text-secondary font-mono text-xs">
+                   <Square className="h-3 w-3 fill-c13-red text-c13-red" />
+                   <span>EVENTS_SCAN</span>
+                </div>
+                <span className="text-text-primary font-mono font-bold text-sm">3</span>
+             </div>
+             <div className="flex items-center justify-between group">
+                <div className="flex items-center space-x-3 text-text-secondary font-mono text-xs">
+                   <CheckSquare className="h-3 w-3 text-status-info" />
+                   <span>TASKS_PENDING</span>
+                </div>
+                <span className="text-text-primary font-mono font-bold text-sm">7</span>
+             </div>
+             <div className="flex items-center justify-between group">
+                <div className="flex items-center space-x-3 text-text-secondary font-mono text-xs">
+                   <Circle className="h-3 w-3 fill-status-active text-status-active animate-pulse-dot" />
+                   <span>TEAM_ONLINE</span>
+                </div>
+                <span className="text-text-primary font-mono font-bold text-sm">4/6</span>
+             </div>
           </div>
-        </div>
+        </section>
+
+        <div className="h-px w-full scanline-divider" />
+
+        {/* NEXT UP Section */}
+        <section className="space-y-4">
+          <h3 className="text-[10px] font-mono font-bold tracking-[0.15em] text-text-secondary uppercase">
+            NEXT UP // UPLINK
+          </h3>
+          <div className="space-y-5">
+             <div className="space-y-1">
+                <div className="text-text-code font-mono text-xs font-bold leading-none">14:30 IST</div>
+                <div className="text-text-primary text-sm font-display font-medium leading-tight">AI Builder Summit</div>
+                <div className="text-c13-red font-mono text-[10px] tracking-widest font-bold">ETA: 2h 15m</div>
+             </div>
+             <div className="space-y-1">
+                <div className="text-text-secondary font-mono text-xs font-bold leading-none">18:00 IST</div>
+                <div className="text-text-primary text-sm font-display font-medium leading-tight">Sprint Review</div>
+                <div className="text-text-tertiary font-mono text-[10px] tracking-widest font-bold">UPCOMING</div>
+             </div>
+          </div>
+        </section>
+
+        <div className="h-px w-full bg-border-subtle" />
+
+        {/* PULSE Section */}
+        <section className="space-y-4">
+          <h3 className="text-[10px] font-mono font-bold tracking-[0.15em] text-text-secondary uppercase">
+            TEAM // PULSE
+          </h3>
+          <div className="space-y-4">
+            {teamPulse.map((user) => (
+              <div key={user.name} className="flex items-center justify-between group">
+                 <div className="flex items-center space-x-3">
+                    <Circle className={cn("h-2 w-2 fill-current", user.color)} />
+                    <span className="text-text-primary font-mono text-[13px] font-medium tracking-wide">
+                       {user.name}
+                    </span>
+                 </div>
+                 <user.icon className="h-3.5 w-3.5 text-text-tertiary group-hover:text-text-secondary transition-colors" />
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
-    </div>
+
+      {/* Sidebar Footer */}
+      <div className="p-4 border-t border-border-subtle bg-bg-surface/50">
+         <div className="flex items-center justify-between text-[10px] font-mono text-text-tertiary uppercase tracking-wider">
+            <span>UPLINK_STATUS</span>
+            <span className="text-status-active">ENCRYPTED ✓</span>
+         </div>
+      </div>
+    </aside>
   )
 }
