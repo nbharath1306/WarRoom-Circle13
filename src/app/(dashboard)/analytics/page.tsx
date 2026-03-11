@@ -20,23 +20,23 @@ import {
 import { BarChart3, TrendingUp, Users, Target, Activity, Zap, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
-const taskData = [
-  { name: 'MON', completed: 12, created: 15 },
-  { name: 'TUE', completed: 18, created: 10 },
-  { name: 'WED', completed: 8, created: 12 },
-  { name: 'THU', completed: 15, created: 15 },
-  { name: 'FRI', completed: 22, created: 18 },
-]
-
-const eventData = [
-  { name: 'OPERATIONAL', value: 45 },
-  { name: 'ABORTED', value: 10 },
-  { name: 'PENDING', value: 25 },
-]
+import { useAnalytics } from '@/hooks/use-analytics'
 
 const COLORS = ['#10b981', '#ef4444', '#8b5cf6'] // Green, Red, Purple
 
 export default function AnalyticsPage() {
+  const { data, loading } = useAnalytics()
+
+  if (loading || !data) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <BarChart3 className="h-8 w-8 text-c13-red animate-pulse" />
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">COMPUTING_BATTLE_STATS...</span>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -57,10 +57,10 @@ export default function AnalyticsPage() {
       {/* TOP STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'MISSION_EFFICIENCY', value: '85%', icon: Target, trend: '+12%', color: 'text-c13-red' },
-          { label: 'OP_VELOCITY', value: '42_PTS', icon: Activity, trend: '+5_PTS', color: 'text-status-active' },
-          { label: 'CREW_PULSE', value: '92%', icon: Users, trend: '+2%', color: 'text-status-purple' },
-          { label: 'LOGS_COMMITTED', value: '1,240', icon: Zap, trend: '+150', color: 'text-c13-blue' },
+          { label: 'MISSION_EFFICIENCY', value: data.kpis.efficiency, icon: Target, trend: '+12%', color: 'text-c13-red' },
+          { label: 'OP_VELOCITY', value: data.kpis.velocity, icon: Activity, trend: '+5_PTS', color: 'text-status-active' },
+          { label: 'CREW_PULSE', value: data.kpis.pulse, icon: Users, trend: '+2%', color: 'text-status-purple' },
+          { label: 'LOGS_COMMITTED', value: data.kpis.logsCommitted, icon: Zap, trend: '+150', color: 'text-c13-blue' },
         ].map((stat, i) => (
           <Card key={i} className="border-border-default bg-bg-surface overflow-hidden group hover:border-c13-red transition-all">
             <CardContent className="p-5">
@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
           <CardContent className="p-6">
             <div className="h-80 w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={taskData}>
+                <BarChart data={data.weeklyTasks}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1A1A3E" vertical={false} opacity={0.3} />
                   <XAxis 
                     dataKey="name" 
@@ -137,7 +137,7 @@ export default function AnalyticsPage() {
                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={eventData}
+                      data={data.missionSuccess}
                       cx="50%"
                       cy="50%"
                       innerRadius={70}
@@ -146,7 +146,7 @@ export default function AnalyticsPage() {
                       dataKey="value"
                       stroke="none"
                     >
-                      {eventData.map((entry, index) => (
+                      {data.missionSuccess.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} opacity={0.8} />
                       ))}
                     </Pie>
@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
                </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-3 gap-4 w-full mt-4">
-               {eventData.map((entry, i) => (
+               {data.missionSuccess.map((entry: any, i: number) => (
                  <div key={i} className="text-center p-2 rounded bg-bg-elevated border border-border-subtle">
                     <p className="text-[14px] font-display font-bold text-text-primary">{entry.value}%</p>
                     <p className="text-[8px] font-mono text-text-tertiary uppercase tracking-tighter" style={{ color: COLORS[i] }}>{entry.name}</p>
@@ -186,12 +186,7 @@ export default function AnalyticsPage() {
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-border-subtle">
-                     {[
-                        { ref: 'OX-992', user: 'BHARATH', status: 'OPTIMAL', score: '98/100' },
-                        { ref: 'OX-841', user: 'PRIYA', status: 'NOMINAL', score: '82/100' },
-                        { ref: 'OX-722', user: 'RAJ', status: 'OPTIMAL', score: '94/100' },
-                        { ref: 'OX-610', user: 'SATWIKA', status: 'PARTIAL', score: '65/100' },
-                     ].map((log, i) => (
+                     {data.performanceLog.map((log, i) => (
                         <tr key={i} className="hover:bg-bg-elevated/30 transition-colors group">
                            <td className="p-4 text-[11px] font-mono text-text-secondary font-bold group-hover:text-c13-red">#{log.ref}</td>
                            <td className="p-4 text-[11px] font-display font-medium text-text-primary">{log.user}</td>

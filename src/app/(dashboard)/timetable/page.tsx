@@ -8,13 +8,23 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Trash2, Save, Upload, Calendar, Clock, BookOpen, ArrowRight, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+import { useTimetable } from '@/hooks/use-timetable'
+
 const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
 export default function TimetablePage() {
-  const [blocks, setBlocks] = useState([
-    { day: 0, start: '09:00', end: '10:30', course: 'CS301 DATA_STRUCTURES' },
-    { day: 2, start: '11:00', end: '12:30', course: 'MATH202 CALCULUS_II' },
-  ])
+  const { blocks, setBlocks, loading, saveSchedule } = useTimetable()
+
+  if (loading) {
+     return (
+        <div className="h-96 flex items-center justify-center">
+           <div className="flex flex-col items-center space-y-4">
+              <Calendar className="h-8 w-8 text-status-purple animate-pulse" />
+              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">UPLINKING_SCHEDULE_DATA...</span>
+           </div>
+        </div>
+     )
+  }
 
   const addBlock = () => {
     setBlocks([...blocks, { day: 0, start: '09:00', end: '10:00', course: '' }])
@@ -139,7 +149,10 @@ export default function TimetablePage() {
             <div className="h-2 w-2 rounded-full bg-status-active animate-pulse" />
             <span className="text-[10px] font-mono text-text-secondary uppercase tracking-[0.2em]">LOCAL_SYNC: STABLE</span>
          </div>
-         <Button className="bg-status-active text-white h-10 shadow-[0_0_15px_var(--status-active-glow)] font-mono text-xs tracking-widest uppercase px-8">
+         <Button 
+            onClick={() => saveSchedule(blocks)}
+            className="bg-status-active text-white h-10 shadow-[0_0_15px_var(--status-active-glow)] font-mono text-xs tracking-widest uppercase px-8"
+         >
            <Save className="mr-2 h-4 w-4" />
            COMMIT_CHANGES
          </Button>

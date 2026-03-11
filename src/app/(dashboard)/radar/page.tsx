@@ -6,43 +6,21 @@ import { Badge } from '@/components/ui/badge'
 import { Radar as RadarIcon, RefreshCw, Clock, MapPin, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const mockDiscoveredEvents = [
-  {
-    id: '1',
-    title: 'AI Global Hackathon 2026',
-    source: 'DEVPOST',
-    start_time: '15.04.26',
-    location: 'BENGALURU // ONLINE',
-    relevance: 95,
-    status: 'discovered',
-    tags: ['AI', 'HACKATHON'],
-    crew_rsvp: 4
-  },
-  {
-    id: '2',
-    title: 'Luma Builder Meetup',
-    source: 'LUMA',
-    start_time: '20.03.26',
-    location: 'HSR LAYOUT, BLR',
-    relevance: 88,
-    status: 'registered',
-    tags: ['NETWORKING', 'BUILDER'],
-    crew_rsvp: 6
-  },
-  {
-    id: '3',
-    title: 'MLH Spring Hack',
-    source: 'MLH',
-    start_time: '02.05.26',
-    location: 'AUSTIN, TX // HYBRID',
-    relevance: 72,
-    status: 'pending',
-    tags: ['MLH', 'STUDENT'],
-    crew_rsvp: 2
-  }
-]
+import { useEventRadar } from '@/hooks/use-event-radar'
 
 export default function EventRadarPage() {
+  const { signals, loading, initiateScan } = useEventRadar()
+
+  if (loading) {
+     return (
+        <div className="h-96 flex items-center justify-center">
+           <div className="flex flex-col items-center space-y-4">
+              <RefreshCw className="h-8 w-8 text-c13-red animate-spin" />
+              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">SCANNING_FREQUENCIES...</span>
+           </div>
+        </div>
+     )
+  }
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -61,7 +39,10 @@ export default function EventRadarPage() {
                 <Search className="mr-2 h-4 w-4 text-text-tertiary" />
                 FILTER_SIGNALS
              </Button>
-             <Button className="bg-c13-red text-white h-9 shadow-[0_0_15px_var(--c13-red-glow)]">
+             <Button 
+                onClick={initiateScan}
+                className="bg-c13-red text-white h-9 shadow-[0_0_15px_var(--c13-red-glow)]"
+             >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 INITIATE_SCAN
              </Button>
@@ -79,7 +60,7 @@ export default function EventRadarPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {mockDiscoveredEvents.map((event) => (
+        {signals.map((event) => (
           <Card key={event.id} className="relative group overflow-hidden border-border-default bg-bg-surface hover:border-c13-red hover:shadow-[0_0_30px_var(--c13-red-glow)] transition-all duration-300">
             <CardHeader className="p-6 pb-2">
               <div className="flex items-center justify-between mb-4">
@@ -96,17 +77,17 @@ export default function EventRadarPage() {
                 <div className="text-right">
                    <div className={cn(
                       "text-xs font-mono font-black tracking-tighter",
-                      event.relevance > 90 ? "text-status-active" : event.relevance > 80 ? "text-status-warning" : "text-status-error"
+                      event.relevance_score > 90 ? "text-status-active" : event.relevance_score > 80 ? "text-status-warning" : "text-status-error"
                    )}>
-                      REL: {event.relevance}
+                      REL: {event.relevance_score}
                    </div>
                    <div className="h-1 w-16 bg-bg-elevated rounded-full overflow-hidden mt-1">
                       <div 
                          className={cn(
                             "h-full transition-all duration-1000",
-                            event.relevance > 90 ? "bg-status-active" : event.relevance > 80 ? "bg-status-warning" : "bg-status-error"
+                            event.relevance_score > 90 ? "bg-status-active" : event.relevance_score > 80 ? "bg-status-warning" : "bg-status-error"
                          )} 
-                         style={{ width: `${event.relevance}%` }} 
+                         style={{ width: `${event.relevance_score}%` }} 
                       />
                    </div>
                 </div>
@@ -122,7 +103,7 @@ export default function EventRadarPage() {
 
             <CardContent className="p-6 pt-2 space-y-6">
                <div className="flex flex-wrap gap-2">
-                  {event.tags.map(tag => (
+                  {event.tags.map((tag: string) => (
                     <Badge key={tag} variant="outline" className="bg-bg-elevated/30 border-border-subtle hover:border-text-tertiary text-text-tertiary">
                       {tag}
                     </Badge>
@@ -132,10 +113,10 @@ export default function EventRadarPage() {
                <div className="space-y-3">
                   <div className="flex items-center justify-between text-[10px] font-mono font-bold tracking-widest text-text-secondary uppercase">
                      <span>CREW_RSVP // STATUS</span>
-                     <span>{event.crew_rsvp}/6 CONFIRMED</span>
+                     <span>{event.crew_rsvp.length}/6 CONFIRMED</span>
                   </div>
                   <div className="flex -space-x-2 overflow-hidden">
-                     {[...Array(event.crew_rsvp)].map((_, i) => (
+                     {event.crew_rsvp.map((_, i: number) => (
                         <div key={i} className="inline-block h-6 w-6 rounded-full ring-2 ring-bg-surface bg-bg-elevated border border-border-subtle flex items-center justify-center text-[10px] font-mono text-text-primary">
                            {String.fromCharCode(65 + i)}
                         </div>

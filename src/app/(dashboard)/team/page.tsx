@@ -10,48 +10,42 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MessageSquare, Clock, AlertCircle, CheckCircle2, Zap, Activity, Shield, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const mockTeamStatus = [
-  { 
-    name: 'BHARATH', 
-    status: 'building', 
-    message: 'OPTIMIZING_CORE_OPS', 
-    last_active: '2M_AGO',
-    avatar: 'B'
-  },
-  { 
-    name: 'PRIYA', 
-    status: 'available', 
-    message: 'REVIEWING_INTEL', 
-    last_active: '15M_AGO',
-    avatar: 'P'
-  },
-  { 
-    name: 'RAJ', 
-    status: 'in_class', 
-    message: 'CS301_LECTURE', 
-    last_active: '1H_AGO',
-    avatar: 'R'
-  },
-]
+import { TEAM_MEMBERS, getMemberStatusColor } from '@/lib/team'
+import { useTeamStatus } from '@/hooks/use-team-status'
 
 const mockCheckInFeed = [
   {
-    user: 'BHARATH',
+    user: 'N. BHARATH',
     yesterday: 'DEPLOYED_ANALYTICS_BOARD',
     today: 'SYSTEM_WIDE_REFACTOR',
     blockers: 'NONE',
     time: '09:30_AM'
   },
   {
-    user: 'SATWIKA',
+    user: 'AKHIL VIPIN NAIR',
+    yesterday: 'CORE_DESIGN_SYSTEM_V2',
+    today: 'ANIMATION_TOKENS_SYNC',
+    blockers: 'NONE',
+    time: '10:00_AM'
+  },
+  {
+    user: 'G K HARJITH ADITHYHA',
     yesterday: 'INTEL_RADAR_DOCS',
     today: 'LUMA_API_SYNC',
     blockers: 'KEY_PENDING',
     time: '10:15_AM'
+  },
+  {
+    user: 'PRASEEDA P RAO',
+    yesterday: 'DATA_PIPELINE_SETUP',
+    today: 'AVAILABILITY_MATRIX_LOGIC',
+    blockers: 'NONE',
+    time: '11:00_AM'
   }
 ]
 
 export default function TeamPulsePage() {
+  const { members } = useTeamStatus()
   const [statusMessage, setStatusMessage] = useState('')
 
   return (
@@ -66,8 +60,8 @@ export default function TeamPulsePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <h1 className="text-3xl md:text-4xl font-display font-bold text-text-primary tracking-tight">TEAM PULSE</h1>
           <div className="flex items-center gap-3">
-             <Badge variant="active" className="h-6">3_OPERATIONAL</Badge>
-             <Badge variant="pending" className="h-6">2_FOCUS_MODE</Badge>
+             <Badge variant="active" className="h-6">{members.filter(m => m.status === 'available' || m.status === 'building').length}_OPERATIONAL</Badge>
+             <Badge variant="pending" className="h-6">{members.filter(m => m.status === 'in_class').length}_FOCUS_MODE</Badge>
           </div>
         </div>
       </header>
@@ -102,7 +96,7 @@ export default function TeamPulsePage() {
 
           <div className="space-y-4">
             <h3 className="text-[11px] font-mono font-bold text-text-secondary uppercase tracking-[0.2em] px-2">CREW_ACTIVITY</h3>
-            {mockTeamStatus.map((user, i) => (
+            {members.map((user, i) => (
               <div key={i} className="flex items-center justify-between p-4 rounded-lg bg-bg-surface border border-border-default hover:border-c13-red transition-all group">
                 <div className="flex items-center space-x-4">
                   <div className="h-9 w-9 bg-bg-elevated border border-border-subtle rounded flex items-center justify-center text-xs font-mono font-bold text-c13-red">
@@ -110,15 +104,16 @@ export default function TeamPulsePage() {
                   </div>
                   <div>
                     <p className="text-sm font-display font-bold text-text-primary group-hover:text-c13-red transition-colors">{user.name}</p>
-                    <p className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider">{user.message}</p>
+                    <p className="text-[10px] font-mono text-text-tertiary uppercase tracking-wider">{user.statusMessage}</p>
                   </div>
                 </div>
                 <div className="text-right">
                    <div className={cn(
                      "h-1.5 w-1.5 rounded-full ml-auto mb-1 animate-pulse",
-                     user.status === 'building' ? 'bg-c13-red shadow-[0_0_8px_var(--c13-red-glow)]' : 'bg-status-active shadow-[0_0_8px_var(--status-active-glow)]'
+                     getMemberStatusColor(user.status).replace('bg-', 'shadow-[0_0_8px_var(--') + '-glow)]',
+                     getMemberStatusColor(user.status)
                    )} />
-                   <p className="text-[9px] font-mono text-text-tertiary uppercase">{user.last_active}</p>
+                   <p className="text-[9px] font-mono text-text-tertiary uppercase">{user.lastActive}</p>
                 </div>
               </div>
             ))}

@@ -1,10 +1,14 @@
+'use client'
+
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, CheckCircle2, Clock, MapPin, Calendar as CalendarIcon, MessageSquare, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useActionStream } from '@/hooks/use-action-stream'
 
 export default function DashboardPage() {
+  const { actions } = useActionStream()
   const currentDate = "13.03.26 // WEDNESDAY // 14:32 IST"
 
   return (
@@ -103,12 +107,7 @@ export default function DashboardPage() {
             <div className="h-px flex-1 bg-border-subtle" />
           </div>
           <div className="space-y-6 px-4">
-            {[
-              { user: 'BHARATH', action: 'DEPLOYED_EVENT', target: 'Luma AI Meetup', time: '10M AGO', sub: 'SYNC_COMPLETE' },
-              { user: 'AKHIL', action: 'COMPLETED_MISSION', target: 'Fix login redirect bug', time: '1H AGO', sub: 'COMMIT: 45fda6e' },
-              { user: 'CIRCLE_BRAIN', action: 'NEW_SIGNAL', target: 'GenAI Conf', time: '2H AGO', sub: 'REL_SCORE: 78' },
-              { user: 'DAVE', action: 'STATUS_UPDATE', target: 'IN_CLASS', time: '4H AGO', sub: 'CS301 LECTURE' },
-            ].map((item, i) => (
+            {actions.map((item, i) => (
               <div key={i} className="relative flex space-x-4 group">
                 {/* Visual Connector tag was here */}
                 {i < 3 && <div className="absolute left-[7px] top-6 w-[2px] h-10 bg-border-subtle" />}

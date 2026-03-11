@@ -123,14 +123,14 @@ export default function AvailabilityPage() {
               </div>
            </section>
 
-           <section className="bg-bg-surface border border-border-default rounded p-6 space-y-4">
+            <section className="bg-bg-surface border border-border-default rounded p-6 space-y-4">
               <h3 className="text-[11px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">CREW_STATUS // LIVE</h3>
               <div className="space-y-4">
                  {[
-                   { name: 'BHARATH', status: 'OPERATIONAL', color: 'bg-status-active' },
-                   { name: 'AKHIL', status: 'IN_MEETING', color: 'bg-status-warning' },
-                   { name: 'PRIYA', status: 'DEEP_WORK', color: 'bg-status-purple' },
-                   { name: 'DAVE', status: 'OFFLINE', color: 'bg-text-tertiary' },
+                   { name: 'N. BHARATH', status: 'OPERATIONAL', color: 'bg-status-active' },
+                   { name: 'AKHIL VIPIN NAIR', status: 'BUILDING', color: 'bg-c13-red' },
+                   { name: 'G K HARJITH ADITHYHA', status: 'IN_MEETING', color: 'bg-status-warning' },
+                   { name: 'PRASEEDA P RAO', status: 'DEEP_WORK', color: 'bg-status-purple' },
                  ].map(member => (
                     <div key={member.name} className="flex items-center justify-between">
                        <div className="flex items-center space-x-3">

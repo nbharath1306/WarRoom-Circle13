@@ -14,14 +14,12 @@ async function runScan() {
     console.error('Error scanning Devpost:', e)
   }
 
-  // 2. Fetch Luma Events (if API key exists)
-  if (process.env.LUMA_API_KEY && process.env.LUMA_API_KEY !== 'your-luma-api-key') {
-    try {
-      const lumaEvents = await fetchLumaEvents(process.env.LUMA_API_KEY)
-      console.log(`Discovered ${lumaEvents.length} events from Luma`)
-    } catch (e) {
-      console.error('Error scanning Luma:', e)
-    }
+  // 2. Fetch Luma Events (Scraping Pivot)
+  try {
+    const lumaEvents = await fetchLumaEvents()
+    console.log(`Discovered ${lumaEvents.length} events from Luma`)
+  } catch (e) {
+    console.error('Error scanning Luma:', e)
   }
 
   console.log('--- Scan Complete ---')

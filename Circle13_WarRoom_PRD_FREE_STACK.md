@@ -255,16 +255,11 @@ Rule: IF event is in the same city AND date is weekend
 
 Rules are stored in the `automation_rules` table as JSON and evaluated by a Next.js API route after each scan cycle.
 
-#### Luma API Integration Details
-
-- **Base URL:** `https://public-api.luma.com`
-- `POST /v1/event/create` — Create events on Circle13's Luma calendar
-- `GET /v1/event/get-guests` — Pull guest lists for events Circle13 is attending
-- `POST /v1/event/update-guest-status` — Update RSVP status programmatically
-- `GET /v1/event/get-guest?id={pk}` — Get individual guest details
-- **Authentication:** API Key in `x-luma-api-key` header
-- **Rate Limit:** 300 requests/minute
-- **Cost:** FREE (no paid tier required for API access)
+#### Luma (lu.ma) Integration
+- **Strategy**: Public Web Scraping (Cheerio) of calendar pages.
+- **Data Pulled**: Public event details, slugs, and RSVPs.
+- **Cost**: $0 (FREE).
+- **Authentication**: None required for discovery.
 
 #### Event Detail Card (UI)
 

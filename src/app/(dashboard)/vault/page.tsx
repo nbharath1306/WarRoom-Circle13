@@ -8,15 +8,27 @@ import { Badge } from '@/components/ui/badge'
 import { FileText, Search, Plus, Folder, Book, Shield, Lock, Clock, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const mockDocs = [
-  { id: '1', title: 'PROJECT_CHARTER_WAR_ROOM', type: 'TECHNICAL', date: '2026-03-01', level: 'TS//SCI' },
-  { id: '2', title: 'MEETING_NOTES_FEB_28', type: 'COMMUNICATIONS', date: '2026-02-28', level: 'SECRET' },
-  { id: '3', title: 'SUPABASE_INTEGRATION_GUIDE', type: 'TECHNICAL', date: '2026-03-05', level: 'CONFIDENTIAL' },
-  { id: '4', title: 'HACKATHON_PREP_TEMPLATE', type: 'OPERATIONAL', date: '2026-01-15', level: 'UNCLASSIFIED' },
-]
+import { useKnowledgeVault } from '@/hooks/use-knowledge-vault'
 
 export default function KnowledgeVaultPage() {
+  const { docs, loading, categories } = useKnowledgeVault()
   const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredDocs = docs.filter(doc => 
+    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.category.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  if (loading) {
+    return (
+      <div className="h-96 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <Shield className="h-8 w-8 text-c13-blue animate-pulse" />
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">DECRYPTING_ARCHIVES...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -56,13 +68,20 @@ export default function KnowledgeVaultPage() {
                <Shield className="mr-2 h-3.5 w-3.5 text-c13-blue" /> DIRECTORIES
             </h3>
             <div className="space-y-1">
-               {['ALL_ENTRIES', 'TECHNICAL_INTEL', 'COMMS_LOGS', 'MISSIION_TEMPLATES', 'ENCRYPT_LINKS'].map(cat => (
-                 <Button key={cat} variant="ghost" className="w-full justify-between text-[11px] font-mono tracking-tight text-text-secondary hover:text-c13-red hover:bg-bg-elevated/50 group px-3 py-2 h-9 border border-transparent hover:border-border-subtle">
+               <Button variant="secondary" className="w-full justify-between text-[11px] font-mono tracking-tight text-text-secondary hover:text-c13-red hover:bg-bg-elevated/50 group px-3 py-2 h-9 border border-border-subtle">
+                  <span className="flex items-center">
+                     <Folder className="mr-3 h-4 w-4 text-c13-blue group-hover:text-c13-red transition-colors" />
+                     ALL_ENTRIES
+                  </span>
+                  <span className="text-[9px] text-text-tertiary">{docs.length.toString().padStart(2, '0')}</span>
+               </Button>
+               {categories.map(cat => (
+                 <Button key={cat.name} variant="ghost" className="w-full justify-between text-[11px] font-mono tracking-tight text-text-secondary hover:text-c13-red hover:bg-bg-elevated/50 group px-3 py-2 h-9 border border-transparent hover:border-border-subtle">
                     <span className="flex items-center">
                        <Folder className="mr-3 h-4 w-4 text-c13-blue group-hover:text-c13-red transition-colors" />
-                       {cat}
+                       {cat.name.toUpperCase()}
                     </span>
-                    <span className="text-[9px] text-text-tertiary">0{Math.floor(Math.random() * 9) + 1}</span>
+                    <span className="text-[9px] text-text-tertiary">{cat.count.toString().padStart(2, '0')}</span>
                  </Button>
                ))}
             </div>
@@ -83,7 +102,7 @@ export default function KnowledgeVaultPage() {
         <div className="md:col-span-3 space-y-4">
           <h3 className="text-[11px] font-mono font-bold text-text-secondary uppercase tracking-[0.2em] px-2">RECENT_INTELLIGENCE</h3>
           <div className="grid grid-cols-1 gap-4">
-            {mockDocs.map(doc => (
+            {filteredDocs.map(doc => (
               <Card key={doc.id} className="border-border-default bg-bg-surface hover:border-c13-red transition-all cursor-pointer group overflow-hidden">
                 <CardContent className="p-0 flex flex-col sm:flex-row sm:items-center">
                   <div className="p-5 flex items-center space-x-5 flex-1">
@@ -92,20 +111,20 @@ export default function KnowledgeVaultPage() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                         <Badge variant="outline" className="text-[9px] py-0 h-4 bg-bg-void border-border-subtle text-text-tertiary"># {doc.id.padStart(4, '0')}</Badge>
+                         <Badge variant="outline" className="text-[9px] py-0 h-4 bg-bg-void border-border-subtle text-text-tertiary"># {doc.id.substring(0, 4).toUpperCase()}</Badge>
                          <Badge variant="outline" className={cn(
                            "text-[8px] py-0 h-4 font-mono",
-                           doc.level === 'TS//SCI' ? 'border-status-error/50 text-status-error' : 
-                           doc.level === 'SECRET' ? 'border-c13-red/50 text-c13-red' : 'border-border-subtle text-text-tertiary'
-                         )}>{doc.level}</Badge>
+                           doc.security_level === 'TS//SCI' ? 'border-status-error/50 text-status-error' : 
+                           doc.security_level === 'SECRET' ? 'border-c13-red/50 text-c13-red' : 'border-border-subtle text-text-tertiary'
+                         )}>{doc.security_level}</Badge>
                       </div>
                       <h4 className="font-display font-bold text-text-primary tracking-wide group-hover:text-c13-red transition-colors truncate">{doc.title}</h4>
                       <div className="flex items-center space-x-4 mt-1">
                          <div className="flex items-center text-[10px] font-mono text-text-tertiary uppercase">
-                            <Clock className="mr-1.5 h-3 w-3" /> {doc.date}
+                            <Clock className="mr-1.5 h-3 w-3" /> {doc.created_at}
                          </div>
                          <div className="flex items-center text-[10px] font-mono text-text-tertiary uppercase">
-                            <Plus className="mr-1.5 h-3 w-3" /> {doc.type}
+                            <Plus className="mr-1.5 h-3 w-3" /> {doc.category}
                          </div>
                       </div>
                     </div>

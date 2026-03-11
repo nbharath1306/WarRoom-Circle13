@@ -24,18 +24,13 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 
+import { useTaskEngine } from '@/hooks/use-task-engine'
+
 const columns = [
   { id: 'todo', title: 'BACKLOG // INCOMING' },
   { id: 'in_progress', title: 'OPERATIONS // ACTIVE' },
   { id: 'review', title: 'REVIEW // QA' },
   { id: 'done', title: 'ARCHIVE // DEPLOYED' },
-]
-
-const initialTasks = [
-  { id: '1', title: 'Setup Supabase Auth & SSR', status: 'todo', priority: 'HIGH', owner: 'B', sub: 'AUTH_SUBSYSTEM' },
-  { id: '2', title: 'Mission Control Dashboard Shell', status: 'in_progress', priority: 'CRIT', owner: 'A', sub: 'UI_CORE' },
-  { id: '3', title: 'Luma API Integration Research', status: 'todo', priority: 'LOW', owner: 'P', sub: 'INTELLIGENCE' },
-  { id: '4', title: 'Initial Project PRD finalized', status: 'done', priority: 'LOW', owner: 'S', sub: 'DOCUMENTATION' },
 ]
 
 interface Task {
@@ -113,8 +108,19 @@ function SortableTaskCard({ task }: { task: Task }) {
 }
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState(initialTasks)
+  const { tasks, loading, updateTaskStatus, setTasks } = useTaskEngine()
   const [activeId, setActiveId] = useState<string | null>(null)
+
+  if (loading) {
+     return (
+        <div className="h-96 flex items-center justify-center">
+           <div className="flex flex-col items-center space-y-4">
+              <Terminal className="h-8 w-8 text-c13-red animate-pulse" />
+              <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-text-secondary uppercase">UPLINKING_TASK_DATA...</span>
+           </div>
+        </div>
+     )
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -144,11 +150,7 @@ export default function TasksPage() {
       const overStatus = isOverAColumn ? overId : tasks.find(t => t.id === overId)?.status
       
       if (overStatus && activeTask.status !== overStatus) {
-        setTasks((prev) => 
-          prev.map((t) => 
-            t.id === active.id ? { ...t, status: overStatus } : t
-          )
-        )
+        updateTaskStatus(activeTask.id, overStatus)
       }
     }
   }
