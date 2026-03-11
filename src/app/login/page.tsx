@@ -16,6 +16,23 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
+    setLoading(true)
+    setError(null)
+    const supabase = getSupabase()
+    const { error: authError } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      }
+    })
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+    }
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -31,7 +48,7 @@ export default function LoginPage() {
       setError(authError.message)
     } else {
       router.push('/')
-      router.refresh() // Ensure middleware catches the new session
+      router.refresh()
     }
     setLoading(false)
   }
@@ -65,35 +82,54 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
 
-        <form onSubmit={handleLogin}>
-          <CardContent className="space-y-6 px-8">
+        <CardContent className="space-y-6 px-8 pb-4">
+          {/* SOCIAL LOGINS */}
+          <div className="grid grid-cols-2 gap-3 mb-2">
+             <Button 
+                variant="outline" 
+                onClick={() => handleSocialLogin('google')}
+                className="h-11 border-border-default bg-bg-void hover:bg-bg-elevated/50 font-mono text-[10px] tracking-widest text-text-secondary transition-all"
+             >
+                GOOGLE
+             </Button>
+             <Button 
+                variant="outline" 
+                onClick={() => handleSocialLogin('github')}
+                className="h-11 border-border-default bg-bg-void hover:bg-bg-elevated/50 font-mono text-[10px] tracking-widest text-text-secondary transition-all"
+             >
+                GITHUB
+             </Button>
+          </div>
+
+          <div className="relative">
+             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border-subtle" /></div>
+             <div className="relative flex justify-center text-[8px] uppercase font-mono"><span className="bg-bg-surface px-2 text-text-tertiary tracking-[0.4em]">OR_USE_OPERATIVE_ID</span></div>
+          </div>
+          
+          <form onSubmit={handleLogin} className="space-y-6 mt-4">
             <div className="space-y-2">
               <label className="text-[10px] font-mono font-bold text-text-secondary uppercase tracking-widest pl-1">OPERATIVE_ID (EMAIL)</label>
-              <div className="relative group">
-                <Input
-                  type="email"
-                  placeholder="USER@CIRCLE13.ALPHA"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary placeholder:text-text-tertiary/20 focus:ring-c13-red transition-all"
-                />
-              </div>
+              <Input
+                type="email"
+                placeholder="USER@CIRCLE13.ALPHA"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary placeholder:text-text-tertiary/20 focus:ring-c13-red transition-all"
+              />
             </div>
             <div className="space-y-2">
                <div className="flex items-center justify-between px-1">
                   <label className="text-[10px] font-mono font-bold text-text-secondary uppercase tracking-widest">ENCRYPTION_KEY (PASSWORD)</label>
                   <span className="text-[9px] font-mono text-text-tertiary opacity-50 tracking-tighter hover:text-c13-red cursor-pointer">FORGOT_KEY?</span>
                </div>
-              <div className="relative group">
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary focus:ring-c13-red transition-all"
-                />
-              </div>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary focus:ring-c13-red transition-all"
+              />
             </div>
 
             {error && (
@@ -102,13 +138,11 @@ export default function LoginPage() {
                   <p className="text-[10px] font-mono text-status-error uppercase leading-tight font-bold">{error}</p>
                </div>
             )}
-          </CardContent>
-
-          <CardFooter className="px-8 pb-10 flex flex-col space-y-6">
+            
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-14 bg-c13-red text-white hover:bg-[#d83a54] shadow-[0_0_20px_var(--c13-red-glow)] font-mono text-xs tracking-[0.2em] font-bold group"
+              className="w-full h-14 bg-c13-red text-white hover:bg-[#d83a54] shadow-[0_0_20px_var(--c13-red-glow)] font-mono text-xs tracking-[0.2em] font-bold group mt-4"
             >
               {loading ? (
                 <div className="flex items-center space-x-2">
@@ -122,14 +156,16 @@ export default function LoginPage() {
                 </div>
               )}
             </Button>
-            
-            <div className="flex items-center justify-between w-full opacity-40">
-               <div className="h-px bg-border-subtle flex-1" />
-               <span className="text-[9px] font-mono mx-4 tracking-[0.3em]">SECURE_NODE: BOM1_WARROOM</span>
-               <div className="h-px bg-border-subtle flex-1" />
-            </div>
-          </CardFooter>
-        </form>
+          </form>
+        </CardContent>
+
+        <CardFooter className="px-8 pb-10 flex flex-col space-y-6">
+          <div className="flex items-center justify-between w-full opacity-40 pt-4">
+             <div className="h-px bg-border-subtle flex-1" />
+             <span className="text-[9px] font-mono mx-4 tracking-[0.3em]">SECURE_NODE: BOM1_WARROOM</span>
+             <div className="h-px bg-border-subtle flex-1" />
+          </div>
+        </CardFooter>
         
         {/* BOTTOM DECO */}
         <div className="h-1 w-full bg-border-subtle flex">

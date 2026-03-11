@@ -19,11 +19,26 @@ import {
   MessageSquare,
   Shield,
   Activity,
-  Cpu
+  Cpu,
+  LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getSupabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+  const handleLogout = async () => {
+    setLoading(true)
+    const supabase = getSupabase()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+    setLoading(false)
+  }
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
@@ -37,6 +52,16 @@ export default function SettingsPage() {
           <h1 className="text-3xl md:text-4xl font-display font-bold text-text-primary tracking-tight">COMMAND CENTER</h1>
           <div className="flex items-center gap-3">
              <Badge variant="active" className="h-6 text-[10px] font-mono uppercase">ADMIN_AUTHENTICATED</Badge>
+             <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleLogout}
+                disabled={loading}
+                className="h-8 border-c13-red/30 text-c13-red hover:bg-c13-red hover:text-white bg-transparent transition-all font-mono text-[10px]"
+             >
+                <LogOut className="mr-2 h-3.5 w-3.5" />
+                {loading ? 'TERMINATING...' : 'TERMINATE_SESSION'}
+             </Button>
           </div>
         </div>
       </header>
