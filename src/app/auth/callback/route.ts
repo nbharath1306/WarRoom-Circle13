@@ -3,11 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
-  const token_hash = requestUrl.searchParams.get('token_hash')
-  const type = requestUrl.searchParams.get('type') as string | null
+  const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') ?? '/'
 
-  if (token_hash && type) {
+  if (code) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -38,18 +37,11 @@ export async function GET(request: NextRequest) {
           },
         }
       )
-      
-      const { error } = await supabase.auth.verifyOtp({
-        type: type as any,
-        token_hash,
-      })
-
-      if (!error) {
-        return response
-      }
+      await supabase.auth.exchangeCodeForSession(code)
+      return response
     }
   }
 
-  // return the user to an error page with some instructions
+  // URL to redirect to after sign in process completes
   return NextResponse.redirect(new URL('/login?error=Invalid+Magic+Link', request.url))
 }
