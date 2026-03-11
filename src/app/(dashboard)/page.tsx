@@ -1,6 +1,7 @@
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Plus, CheckCircle2, Clock, MapPin, Calendar as CalendarIcon } from 'lucide-react'
+import { Plus, CheckCircle2, Clock, MapPin, Calendar as CalendarIcon, MessageSquare } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
