@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY // VERY IMPORTANT: Use service key to bypass RLS
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY 
 
     if (!supabaseUrl || !supabaseServiceKey) {
       return NextResponse.json({ error: 'Missing Supabase credentials in server' }, { status: 500 })
@@ -12,78 +12,80 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // TARGET: We target a high-traffic city directory where Luma embeds rich JSON data.
-    const LUMA_URL = 'https://lu.ma/blr'
-    console.log(`[SCRAPER] Initializing extraction on: ${LUMA_URL}`)
+    // TARGET: Scan multiple high-traffic global Tech Hubs to ensure maximum signal acquisition
+    const LUMA_URLS = ['https://lu.ma/blr', 'https://lu.ma/sf', 'https://lu.ma/nyc']
+    console.log(`[SCRAPER] Initializing multi-node extraction on global hubs...`)
 
-    const res = await fetch(LUMA_URL, {
-      headers: {
-         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
-    })
+    let allExtractedEvents: any[] = []
 
-    if (!res.ok) {
-       throw new Error(`Failed to fetch Luma: ${res.statusText}`)
-    }
+    for (const url of LUMA_URLS) {
+        try {
+            const res = await fetch(url, {
+              headers: {
+                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+              }
+            })
 
-    const html = await res.text()
-    
-    // We bypass DOM parsing entirely and go straight for the React JSON payload
-    const match = html.match(/<script id="__NEXT_DATA__".*?>(.*?)<\/script>/)
-    const events: any[] = []
+            if (!res.ok) continue
 
-    if (match) {
-        const data = JSON.parse(match[1])
-        const initialData = data.props?.pageProps?.initialData || {}
-        
-        // Brute-force recursive search to find every nested event object
-        const results: any[] = []
-        const searchForEvents = (obj: any) => {
-            if (!obj || typeof obj !== 'object') return
-            if (obj.api_id && obj.api_id.startsWith('evt-') && obj.name) {
-                results.push(obj)
-                return
-            }
-            if (obj.event && obj.event.api_id && obj.event.name) {
-                results.push(obj.event)
-                return
-            }
-            if (Array.isArray(obj)) {
-                for (let o of obj) searchForEvents(o)
-            } else {
-                for (let k in obj) searchForEvents(obj[k])
-            }
-        }
-        searchForEvents(initialData)
-        
-        // Deduplicate and format events
-        const uniqueEvents: Record<string, any> = {}
-        for (const e of results) {
-            if (!uniqueEvents[e.api_id] && events.length < 8) {
-                uniqueEvents[e.api_id] = e
+            const html = await res.text()
+            const match = html.match(/<script id="__NEXT_DATA__".*?>(.*?)<\/script>/)
+
+            if (match) {
+                const data = JSON.parse(match[1])
+                const initialData = data.props?.pageProps?.initialData || {}
                 
-                events.push({
-                    title: e.name || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`,
-                    description: 'Raw metadata intercepted via JSON payload extraction.',
-                    source: 'Luma',
-                    source_url: `https://lu.ma/${e.url || e.api_id}`,
-                    start_time: e.start_at || new Date(Date.now() + 86400000).toISOString(),
-                    location: e.geo_address_info?.city || 'BANGALORE, IN',
-                    status: 'discovered',
-                    relevance_score: Math.floor(Math.random() * (98 - 70 + 1)) + 70, // 70 to 98
-                    tags: ['TECH', 'LUMA', 'EXTRACTED'],
-                    crew_rsvp: [] 
-                })
+                // Brute-force recursive search
+                const results: any[] = []
+                const searchForEvents = (obj: any) => {
+                    if (!obj || typeof obj !== 'object') return
+                    if (obj.api_id && obj.api_id.startsWith('evt-') && obj.name) {
+                        results.push(obj)
+                        return
+                    }
+                    if (obj.event && obj.event.api_id && obj.event.name) {
+                        results.push(obj.event)
+                        return
+                    }
+                    if (Array.isArray(obj)) {
+                        for (let o of obj) searchForEvents(o)
+                    } else {
+                        for (let k in obj) searchForEvents(obj[k])
+                    }
+                }
+                searchForEvents(initialData)
+                
+                const uniqueEvents: Record<string, any> = {}
+                for (const e of results) {
+                    if (!uniqueEvents[e.api_id] && allExtractedEvents.length < 10) { // Max 10 total across all hubs
+                        uniqueEvents[e.api_id] = e
+                        
+                        allExtractedEvents.push({
+                            title: e.name || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`,
+                            description: 'Raw metadata intercepted via JSON payload extraction.',
+                            source: 'Luma',
+                            source_url: `https://lu.ma/${e.url || e.api_id}`,
+                            start_time: e.start_at || new Date(Date.now() + 86400000).toISOString(),
+                            location: e.geo_address_info?.city || url.split('/').pop()?.toUpperCase() || 'UNKNOWN_NODE',
+                            status: 'discovered',
+                            relevance_score: Math.floor(Math.random() * (98 - 70 + 1)) + 70, 
+                            tags: ['TECH', 'LUMA', 'GLOBAL'],
+                            crew_rsvp: [] 
+                        })
+                    }
+                }
             }
+        } catch (e) {
+            console.error(`[SCRAPER] Node query failed for ${url}:`, e)
         }
     }
 
-    console.log(`[SCRAPER] Extracted ${events.length} real signals. Transmitting to Vault...`)
+    console.log(`[SCRAPER] Extracted ${allExtractedEvents.length} real signals. Transmitting to Vault...`)
 
-    if (events.length === 0) {
-      events.push({
+    if (allExtractedEvents.length === 0) {
+      allExtractedEvents.push({
          title: 'Fallible Luma Node - Manual Override Test Event',
-         description: 'The JSON extraction engine could not locate embedded events in the target directory.',
+         description: 'The JSON extraction engine could not locate embedded events in any of the target directories.',
          source: 'Luma Override',
          source_url: 'https://lu.ma',
          start_time: new Date(Date.now() + 86400000 * 2).toISOString(), 
@@ -98,7 +100,7 @@ export async function POST(request: Request) {
     // 3. Upsert into Supabase `events` table
     const { data: insertedData, error: dbError } = await supabase
        .from('events')
-       .upsert(events, { onConflict: 'source_url' }) 
+       .upsert(allExtractedEvents, { onConflict: 'source_url' }) 
        .select()
 
     if (dbError) {
