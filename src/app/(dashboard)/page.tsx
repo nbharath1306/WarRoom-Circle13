@@ -75,18 +75,24 @@ export default function DashboardPage() {
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-white">Quick Actions</h2>
           <div className="grid grid-cols-1 gap-4">
-            <Button className="h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
-              <Plus className="mr-2 h-4 w-4 text-[#E94560]" />
-              Create Task
-            </Button>
-            <Button className="h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
-              <CheckCircle2 className="mr-2 h-4 w-4 text-[#E94560]" />
-              Mark Attendance
-            </Button>
-            <Button className="h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
-              <Clock className="mr-2 h-4 w-4 text-[#E94560]" />
-              Start Focus Timer
-            </Button>
+            <Link href="/tasks">
+              <Button className="w-full h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
+                <Plus className="mr-2 h-4 w-4 text-[#E94560]" />
+                Create Task
+              </Button>
+            </Link>
+            <Link href="/timetable">
+              <Button className="w-full h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
+                <CheckCircle2 className="mr-2 h-4 w-4 text-[#E94560]" />
+                Update Timetable
+              </Button>
+            </Link>
+            <Link href="/team">
+              <Button className="w-full h-12 justify-start bg-[#12122A] border border-[#2A2A4A] hover:bg-[#1A1A3E]">
+                <MessageSquare className="mr-2 h-4 w-4 text-[#E94560]" />
+                Team Pulse
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
