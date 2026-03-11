@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card'
@@ -19,6 +19,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    const supabase = getSupabase()
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
