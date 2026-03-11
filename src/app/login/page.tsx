@@ -16,27 +16,40 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
-  const handleSocialLogin = async (provider: 'google' | 'github') => {
+  const [message, setMessage] = useState<string | null>(null)
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email) {
+      setError('OPERATIVE_EMAIL_REQUIRED')
+      return
+    }
+
     setLoading(true)
     setError(null)
+    setMessage(null)
+
     const supabase = getSupabase()
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider,
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       }
     })
 
     if (authError) {
       setError(authError.message)
-      setLoading(false)
+    } else {
+      setMessage('QUANTUM_LINK_TRANSMITTED // CHECK_INBOX')
     }
+    setLoading(false)
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setMessage(null)
 
     const supabase = getSupabase()
     const { error: authError } = await supabase.auth.signInWithPassword({
@@ -83,30 +96,7 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent className="space-y-6 px-8 pb-4">
-          {/* SOCIAL LOGINS */}
-          <div className="grid grid-cols-2 gap-3 mb-2">
-             <Button 
-                variant="outline" 
-                onClick={() => handleSocialLogin('google')}
-                className="h-11 border-border-default bg-bg-void hover:bg-bg-elevated/50 font-mono text-[10px] tracking-widest text-text-secondary transition-all"
-             >
-                GOOGLE
-             </Button>
-             <Button 
-                variant="outline" 
-                onClick={() => handleSocialLogin('github')}
-                className="h-11 border-border-default bg-bg-void hover:bg-bg-elevated/50 font-mono text-[10px] tracking-widest text-text-secondary transition-all"
-             >
-                GITHUB
-             </Button>
-          </div>
-
-          <div className="relative">
-             <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border-subtle" /></div>
-             <div className="relative flex justify-center text-[8px] uppercase font-mono"><span className="bg-bg-surface px-2 text-text-tertiary tracking-[0.4em]">OR_USE_OPERATIVE_ID</span></div>
-          </div>
-          
-          <form onSubmit={handleLogin} className="space-y-6 mt-4">
+          <form className="space-y-6 mt-4">
             <div className="space-y-2">
               <label className="text-[10px] font-mono font-bold text-text-secondary uppercase tracking-widest pl-1">OPERATIVE_ID (EMAIL)</label>
               <Input
@@ -118,7 +108,28 @@ export default function LoginPage() {
                 className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary placeholder:text-text-tertiary/20 focus:ring-c13-red transition-all"
               />
             </div>
-            <div className="space-y-2">
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+               <Button 
+                  type="button"
+                  onClick={handleMagicLink}
+                  disabled={loading}
+                  variant="outline"
+                  className="h-12 border-c13-blue/30 text-c13-blue hover:bg-c13-blue hover:text-white bg-transparent transition-all font-mono text-[10px] tracking-widest uppercase"
+               >
+                  {loading ? 'SENDING...' : 'SEND_MAGIC_LINK'}
+               </Button>
+               <Button 
+                  type="submit"
+                  onClick={handleLogin}
+                  disabled={loading}
+                  className="h-12 bg-c13-red text-white hover:bg-[#d83a54] shadow-[0_0_15px_var(--c13-red-glow)] font-mono text-[10px] tracking-widest font-bold uppercase"
+               >
+                  LOGIN_WITH_KEY
+               </Button>
+            </div>
+
+            <div className="space-y-2 pt-2">
                <div className="flex items-center justify-between px-1">
                   <label className="text-[10px] font-mono font-bold text-text-secondary uppercase tracking-widest">ENCRYPTION_KEY (PASSWORD)</label>
                   <span className="text-[9px] font-mono text-text-tertiary opacity-50 tracking-tighter hover:text-c13-red cursor-pointer">FORGOT_KEY?</span>
@@ -127,7 +138,6 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
                 className="bg-bg-void border-border-default h-12 text-xs font-mono text-text-primary focus:ring-c13-red transition-all"
               />
             </div>
@@ -138,24 +148,13 @@ export default function LoginPage() {
                   <p className="text-[10px] font-mono text-status-error uppercase leading-tight font-bold">{error}</p>
                </div>
             )}
-            
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full h-14 bg-c13-red text-white hover:bg-[#d83a54] shadow-[0_0_20px_var(--c13-red-glow)] font-mono text-xs tracking-[0.2em] font-bold group mt-4"
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                   <Activity className="h-4 w-4 animate-spin" />
-                   <span>DECRYPTING...</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                   <span>INITIALIZE_LINK</span>
-                   <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              )}
-            </Button>
+
+            {message && (
+               <div className="bg-status-active/10 border border-status-active/30 p-3 rounded flex items-start space-x-3 animate-in fade-in duration-300">
+                  <Activity className="h-4 w-4 text-status-active shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-mono text-status-active uppercase leading-tight font-bold">{message}</p>
+               </div>
+            )}
           </form>
         </CardContent>
 
