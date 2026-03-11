@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { search, SafeSearchType } from 'duck-duck-scrape'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(request: Request) {
@@ -13,59 +12,78 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    console.log(`[SCRAPER] Initializing Deep Web Search for Luma nodes...`)
+    // TARGET: We target a high-traffic city directory where Luma embeds rich JSON data.
+    const LUMA_URL = 'https://lu.ma/blr'
+    console.log(`[SCRAPER] Initializing extraction on: ${LUMA_URL}`)
 
-    // 1. Fetch search results using DuckDuckGo to bypass Luma's bot blocks
-    const searchResults = await search('site:lu.ma/event "tech" OR "AI" OR "founders" OR "developer"', {
-        safeSearch: SafeSearchType.OFF
+    const res = await fetch(LUMA_URL, {
+      headers: {
+         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
     })
+
+    if (!res.ok) {
+       throw new Error(`Failed to fetch Luma: ${res.statusText}`)
+    }
+
+    const html = await res.text()
     
+    // We bypass DOM parsing entirely and go straight for the React JSON payload
+    const match = html.match(/<script id="__NEXT_DATA__".*?>(.*?)<\/script>/)
     const events: any[] = []
 
-    // 2. Parse the search results into our Event format
-    for (const res of searchResults.results) {
-        if (events.length >= 8) break // Limit to top 8 events
+    if (match) {
+        const data = JSON.parse(match[1])
+        const initialData = data.props?.pageProps?.initialData || {}
         
-        if (res.url && (res.url.includes('lu.ma/event') || res.url.includes('lu.ma/'))) {
-            // Clean up SEO titles
-            let cleanTitle = res.title.replace(/ · Luma/ig, '').replace(/ - Luma/ig, '').replace(/\| Luma/ig, '').trim()
-            
-            // Calculate a random start time within the next 14 days for the mockup live feel
-            const nextDays = Math.floor(Math.random() * 14) + 1
-            const mockStartTime = new Date()
-            mockStartTime.setDate(mockStartTime.getDate() + nextDays)
-            
-            // Extract location hints from snippet if possible
-            let loc = 'REMOTE_OR_UNKNOWN'
-            if (res.description.toLowerCase().includes('bangalore') || res.description.toLowerCase().includes('bengaluru')) {
-                loc = 'BANGALORE, IN'
-            } else if (res.description.toLowerCase().includes('sf') || res.description.toLowerCase().includes('san francisco')) {
-                loc = 'SAN FRANCISCO, CA'
-            } else if (res.description.toLowerCase().includes('london')) {
-                loc = 'LONDON, UK'
+        // Brute-force recursive search to find every nested event object
+        const results: any[] = []
+        const searchForEvents = (obj: any) => {
+            if (!obj || typeof obj !== 'object') return
+            if (obj.api_id && obj.api_id.startsWith('evt-') && obj.name) {
+                results.push(obj)
+                return
             }
-
-            events.push({
-                title: cleanTitle || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`,
-                description: res.description || 'Raw metadata intercepted from indexer.',
-                source: 'Luma',
-                source_url: res.url,
-                start_time: mockStartTime.toISOString(),
-                location: loc,
-                status: 'discovered',
-                relevance_score: Math.floor(Math.random() * (98 - 70 + 1)) + 70, // 70 to 98
-                tags: ['TECH', 'LUMA', 'EXTRACTED'],
-                crew_rsvp: [] 
-            })
+            if (obj.event && obj.event.api_id && obj.event.name) {
+                results.push(obj.event)
+                return
+            }
+            if (Array.isArray(obj)) {
+                for (let o of obj) searchForEvents(o)
+            } else {
+                for (let k in obj) searchForEvents(obj[k])
+            }
+        }
+        searchForEvents(initialData)
+        
+        // Deduplicate and format events
+        const uniqueEvents: Record<string, any> = {}
+        for (const e of results) {
+            if (!uniqueEvents[e.api_id] && events.length < 8) {
+                uniqueEvents[e.api_id] = e
+                
+                events.push({
+                    title: e.name || `Intercepted Signal #${Math.floor(Math.random() * 1000)}`,
+                    description: 'Raw metadata intercepted via JSON payload extraction.',
+                    source: 'Luma',
+                    source_url: `https://lu.ma/${e.url || e.api_id}`,
+                    start_time: e.start_at || new Date(Date.now() + 86400000).toISOString(),
+                    location: e.geo_address_info?.city || 'BANGALORE, IN',
+                    status: 'discovered',
+                    relevance_score: Math.floor(Math.random() * (98 - 70 + 1)) + 70, // 70 to 98
+                    tags: ['TECH', 'LUMA', 'EXTRACTED'],
+                    crew_rsvp: [] 
+                })
+            }
         }
     }
 
-    console.log(`[SCRAPER] Discovered ${events.length} real signals. Transmitting to Vault...`)
+    console.log(`[SCRAPER] Extracted ${events.length} real signals. Transmitting to Vault...`)
 
     if (events.length === 0) {
       events.push({
          title: 'Fallible Luma Node - Manual Override Test Event',
-         description: 'The deep web indexer could not find any events currently matching the target signature.',
+         description: 'The JSON extraction engine could not locate embedded events in the target directory.',
          source: 'Luma Override',
          source_url: 'https://lu.ma',
          start_time: new Date(Date.now() + 86400000 * 2).toISOString(), 
