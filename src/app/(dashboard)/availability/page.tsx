@@ -2,6 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 const mockTeam = ['Bharath', 'Priya', 'Raj', 'Satwika', 'Ananya']
 const hours = Array.from({ length: 15 }, (_, i) => i + 8) // 8 AM to 10 PM

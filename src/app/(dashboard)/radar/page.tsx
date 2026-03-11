@@ -1,7 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Radar, RefreshCw, CheckCircle2, XCircle, ExternalLink } from 'lucide-react'
+import { Radar, RefreshCw, CheckCircle2, XCircle, ExternalLink, Clock } from 'lucide-react'
 
 const mockDiscoveredEvents = [
   {
