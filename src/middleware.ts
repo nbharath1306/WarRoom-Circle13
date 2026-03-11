@@ -68,11 +68,15 @@ export async function middleware(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     // Protected routes logic
-    if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+    // We must exempt /login and /auth/callback from the "must be logged in" redirect
+    const isAuthRoute = request.nextUrl.pathname.startsWith('/auth')
+    const isLoginRoute = request.nextUrl.pathname.startsWith('/login')
+
+    if (!user && !isLoginRoute && !isAuthRoute) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    if (user && request.nextUrl.pathname.startsWith('/login')) {
+    if (user && isLoginRoute) {
       return NextResponse.redirect(new URL('/', request.url))
     }
   } catch (e) {
